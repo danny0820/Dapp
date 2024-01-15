@@ -1,40 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
-<div class="container">
 <head>
-    <link rel="stylesheet" href="./buyticket.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>購票系統</title>
+    <title>售票系统</title>
+    <link rel="stylesheet" href="./sell.css">
     <script src ="https://cdnjs.cloudflare.com/ajax/libs/web3/4.3.1-dev.c858390.0/web3.min.js"></script>
 	<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 </head>
 <body>
-    <h1>購票系统</h1>
+    <h1>售票系统</h1>
     <div>
         <p>我的地址：<span id="my_address"></span></p>
 	    <p>我的餘額：<span id="my_balance"></span></p>
-        <p>目前合約餘額：<span id="total_balance"></span></p>
-        <p>票價：<span id="ticketPriceDisplay"></span> ETH</p>
-        <input type="number" id="userId" placeholder="用户ID" />
-        <input type="text" id="userName" placeholder="用户名" />
-        <input type="number" id="tokenId" placeholder="票ID" />
-        <button id="buyTicketButton">購票</button>
-        <button id="returnTicketButton">退票</button>
+        <hr>
+        <p>售賣門票</p>
+        <input type="number" id="ticket_price" placeholder="門票價格" />
+        <input type="number" id="ticket_number" placeholder="門票數量" />
+        <button onclick="sellTicketButton()">確定</button>
 
     </div>
-    <h2>剩餘票卷</h2>
-    <ul id="availableTokens"></ul>
-    <button id="getMyTicketsButton">查詢我的票卷</button>
-    <ul id="myTicketList"></ul>
-    <h2>查詢門票</h2>
-    <div>
-        <input type="number" id="tokenIdInput" placeholder="输入门票ID" />
-        <button id="getTicketUserIdButton">獲取票的用户ID</button>
-        <button id="getTicketUserNameButton">獲取票的用户名</button>
-        <p>票的用户ID：<span id="ticketUserId"></span></p>
-        <p>票的用户名：<span id="ticketUserName"></span></p>
-    </div>
+    
     <script>
         if (typeof web3 !== 'undefined') {
             web3 = new Web3(web3.currentProvider);
@@ -534,131 +520,21 @@
                    "type": "event"
                }
            ];
-           myContract = new web3.eth.Contract(ticket_abi, ticket_address);
+            myContract = new web3.eth.Contract(ticket_abi, ticket_address);
               //取得合約餘額
-              var balance_contract = await web3.eth.getBalance(ticket_address);
-              $("#total_balance").text(web3.utils.fromWei(balance_contract, 'ether'));
-              // 调用 getAvailableTokens 函数
-              myContract.methods.ticketPrice().call().then(function(result){
-                $("#ticketPriceDisplay").text(web3.utils.fromWei(result, 'ether'));
-            });
-              myContract.methods.getAvailableTokens().call()
-                .then(function(result) {
-                    console.log('可用的 Token ID 数组：', result);
-                    $("#availableTokens").text(result);
-                })
-                .catch(function(error) {
-                    console.error('调用 getAvailableTokens 函数时出错：', error);
-                });
-                // 当点击购票按钮时触发购票操作
-                $("#buyTicketButton").click(async function() {
-                    var userId = $("#userId").val();
-                    var userName = $("#userName").val();
-                    var tokenId = $("#tokenId").val();
-                    var ticketPrice = await myContract.methods.ticketPrice().call();
-                    // 创建购票交易
-                    myContract.methods.buyTicket(userId, userName, tokenId)
-                        .send({ from: coinbase, value: ticketPrice })
-                        .on('transactionHash', function(hash){
-                            console.log("购票交易哈希：" + hash);
-                        })
-                        .on('receipt', function(receipt){
-                            console.log("购票交易收据：" + JSON.stringify(receipt));
-                            // 购票成功后，可以更新界面或执行其他操作
-                        })
-                        .on('error', function(error){
-                            console.error("购票交易错误：" + error);
-                            // 处理购票失败情况
-                        });
-                });  
+           
           };
-                    // JavaScript 中的查询函数
-            document.getElementById("getMyTicketsButton").addEventListener("click", async function() { 
-                try {
-                    // 获取当前帐户地址
-                    const coinbase = await web3.eth.getCoinbase();
-
-                    // 调用合约中的 getticketByOwner 函数，传入当前帐户地址
-                    const myTickets = await myContract.methods.getticketByOwner(coinbase).call();
-                    
-                    // 显示帐户拥有的票卷
-                    displayMyTickets(myTickets);
-                } catch (error) {
-                    console.error("查询票卷错误：" + error);
-                }
-            });
-
-            // 在页面上显示帐户拥有的票卷
-            function displayMyTickets(ticketIds) {
-                const ticketList = document.getElementById("myTicketList");
-                ticketList.innerHTML = ""; // 清空列表以便重新填充
-
-                for (let i = 0; i < ticketIds.length; i++) {
-                    const listItem = document.createElement("li");
-                    listItem.textContent = "票卷 ID：" + ticketIds[i];
-                    ticketList.appendChild(listItem);
-                }
-            }
-            $("#returnTicketButton").click(async () => {
-                var tokenId = $("#tokenId").val();
-    
-                if (!tokenId) {
-                    alert("请输入票ID");
-                    return;
-                }
-    
-                try {
-                    // 调用退还票的函数
-                    await myContract.methods.returnTicket(tokenId).send({
-                        from: coinbase
-                    });
-    
-                    // 更新可用的 Token ID 数组
-                    var availableTokens = await myContract.methods.getAvailableTokens().call();
-                    updateAvailableTokensList(availableTokens);
-    
-                    // 更新我的门票列表
-                    var myTickets = await myContract.methods.getticketByOwner(coinbase).call();
-                    updateMyTicketsList(myTickets);
-                } catch (error) {
-                    console.error('退还票时出错：', error);
-                }
-            });
-            $("#getTicketUserIdButton").click(async () => {
-                var tokenId = $("#tokenIdInput").val();
-        
-                if (!tokenId) {
-                    alert("请输入票ID");
-                    return;
-                }
-        
-                try {
-                    // 调用 seeticketUserID 函数
-                    var userId = await myContract.methods.seeticketUserID(tokenId).call();
-                    $("#ticketUserId").text(userId);
-                } catch (error) {
-                    console.error('获取票的用户ID时出错：', error);
-                }
-            });
-            
-            // 点击事件处理程序来调用 seeticketUserName 函数
-            $("#getTicketUserNameButton").click(async () => {
-                var tokenId = $("#tokenIdInput").val();
-        
-                if (!tokenId) {
-                    alert("请输入票ID");
-                    return;
-                }
-        
-                try {
-                    // 调用 seeticketUserName 函数
-                    var userName = await myContract.methods.seeticketUserName(tokenId).call();
-                    $("#ticketUserName").text(userName);
-                } catch (error) {
-                    console.error('获取票的用户名时出错：', error);
-                }
-            });
           printPostsToConsole();
+          function sellTicketButton(){
+            
+            var tic_price= parseInt(document.getElementById("ticket_price").value);
+			var tic_number= parseInt(document.getElementById("ticket_number").value);
+            console.log(tic_price,tic_number);
+            myContract.methods.createTicket(tic_price, tic_number).send({ from: coinbase, value: tic_price * tic_number }).then(function(recepit){
+				location.reload();
+			});
+
+          }
     </script>
 </body>
 </html>
