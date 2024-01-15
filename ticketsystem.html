@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>购票系统</title>
+    <script src ="https://cdnjs.cloudflare.com/ajax/libs/web3/4.3.1-dev.c858390.0/web3.min.js"></script>
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+</head>
+<body>
+    <h1>购票系统</h1>
+    <div>
+        <p>我的地址：<span id="my_address"></span></p>
+	    <p>我的餘額：<span id="my_balance"></span></p>
+        <p>目前合約餘額：<span id="total_balance"></span></p>
+        <p>票价：<span id="ticketPriceDisplay"></span> ETH</p>
+        <input type="number" id="userId" placeholder="用户ID" />
+        <input type="text" id="userName" placeholder="用户名" />
+        <input type="number" id="tokenId" placeholder="票ID" />
+        <button id="buyTicketButton">购买票</button>
+
+    </div>
+    <h2>剩余票卷</h2>
+    <ul id="availableTokens"></ul>
+    <script>
+        if (typeof web3 !== 'undefined') {
+            web3 = new Web3(web3.currentProvider);
+          } else {
+            // Set the provider you want from Web3.providers
+            web3 = new Web3(new Web3.providers.HttpProvider("HTTP://127.0.0.1:7545"));
+          }
+    
+          var myContract;
+          var coinbase;
+    
+          async function printPostsToConsole() {
+              //取得帳號
+              coinbase = await web3.eth.getCoinbase();
+    
+              //取得帳號餘額
+              var balance = await web3.eth.getBalance(coinbase);
+              
+               $("#my_address").text(coinbase);
+               $("#my_balance").text(web3.utils.fromWei(balance, 'ether'));  
+               var ticket_address = "0xdE7aF4ed0BeEE7098D153dF42328D971A4e50848";
+               var ticket_abi =[
+               {
+                   "constant": true,
+                   "inputs": [],
+                   "name": "name",
+                   "outputs": [
+                       {
+                           "name": "",
+                           "type": "string"
+                       }
+                   ],
+                   "payable": false,
+                   "stateMutability": "view",
+                   "type": "function"
+               },
+               {
+                   "constant": true,
+                   "inputs": [
+                       {
+                           "name": "_tokenId",
+                           "type": "uint256"
+                       }
+                   ],
+                   "name": "seeticketUserName",
+                   "outputs": [
+                       {
+                           "name": "username",
+                           "type": "string"
+                       }
+                   ],
+                   "payable": false,
+                   "stateMutability": "view",
+                   "type": "function"
+               },
+               {
+                   "constant": true,
+                   "inputs": [],
+                   "name": "ticketPrice",
+                   "outputs": [
+                       {
+                           "name": "",
+                           "type": "uint256"
+                       }
+                   ],
+                   "payable": false,
+                   "stateMutability": "view",
+                   "type": "function"
+               },
+               {
+                   "constant": true,
+                   "inputs": [],
+                   "name": "totalSupply",
+                   "outputs": [
+                       {
+                           "name": "",
+                           "type": "uint256"
+                       }
+                   ],
+                   "payable": false,
+                   "stateMutability": "view",
+                   "type": "function"
+               },
+               {
+                   "constant": false,
+                   "inputs": [
+                       {
+                           "name": "_from",
+                           "type": "address"
+                       },
+                       {
+                           "name": "_to",
+                           "type": "address"
+                       },
+                       {
+                           "name": "_tokenId",
+                           "type": "uint256"
+                       }
+                   ],
+                   "name": "transferFrom",
+                   "outputs": [],
+                   "payable": false,
+                   "stateMutability": "nonpayable",
+                   "type": "function"
+               },
+               {
+                   "constant": true,
+                   "inputs": [
+                       {
+                           "name": "",
+                           "type": "uint256"
+                       }
+                   ],
+                   "name": "ticketToOwner",
+                   "outputs": [
+                       {
+                           "name": "",
+                           "type": "address"
+                       }
+                   ],
+                   "payable": false,
+                   "stateMutability": "view",
+                   "type": "function"
+               },
+               {
+                   "constant": true,
+                   "inputs": [
+                       {
+                           "name": "",
+                           "type": "uint256"
+                       }
+                   ],
+                   "name": "tickets",
+                   "outputs": [
+                       {
+                           "name": "userid",
+                           "type": "uint32"
+                       },
+                       {
+                           "name": "username",
+                           "type": "string"
+                       }
+                   ],
+                   "payable": false,
+                   "stateMutability": "view",
+                   "type": "function"
+               },
+               {
+                   "constant": true,
+                   "inputs": [
+                       {
+                           "name": "_tokenId",
+                           "type": "uint256"
+                       }
+                   ],
+                   "name": "ownerOf",
+                   "outputs": [
+                       {
+                           "name": "_owner",
+                           "type": "address"
+                       }
+                   ],
+                   "payable": false,
+                   "stateMutability": "view",
+                   "type": "function"
+               },
+               {
+                   "constant": false,
+                   "inputs": [
+                       {
+                           "name": "_ticketPrice",
+                           "type": "uint256"
+                       },
+                       {
+                           "name": "_maxTickets",
+                           "type": "uint256"
+                       }
+                   ],
+                   "name": "createTicket",
+                   "outputs": [],
+                   "payable": false,
+                   "stateMutability": "nonpayable",
+                   "type": "function"
+               },
+               {
+                   "constant": true,
+                   "inputs": [
+                       {
+                           "name": "_owner",
+                           "type": "address"
+                       }
+                   ],
+                   "name": "balanceOf",
+                   "outputs": [
+                       {
+                           "name": "_balance",
+                           "type": "uint256"
+                       }
+                   ],
+                   "payable": false,
+                   "stateMutability": "view",
+                   "type": "function"
+               },
+               {
+                   "constant": true,
+                   "inputs": [],
+                   "name": "owner",
+                   "outputs": [
+                       {
+                           "name": "",
+                           "type": "address"
+                       }
+                   ],
+                   "payable": false,
+                   "stateMutability": "view",
+                   "type": "function"
+               },
+               {
+                   "constant": true,
+                   "inputs": [
+                       {
+                           "name": "_tokenId",
+                           "type": "uint256"
+                       }
+                   ],
+                   "name": "seeticketUserID",
+                   "outputs": [
+                       {
+                           "name": "userid",
+                           "type": "uint32"
+                       }
+                   ],
+                   "payable": false,
+                   "stateMutability": "view",
+                   "type": "function"
+               },
+               {
+                   "constant": true,
+                   "inputs": [],
+                   "name": "symbol",
+                   "outputs": [
+                       {
+                           "name": "",
+                           "type": "string"
+                       }
+                   ],
+                   "payable": false,
+                   "stateMutability": "view",
+                   "type": "function"
+               },
+               {
+                   "constant": true,
+                   "inputs": [],
+                   "name": "maxTickets",
+                   "outputs": [
+                       {
+                           "name": "",
+                           "type": "uint256"
+                       }
+                   ],
+                   "payable": false,
+                   "stateMutability": "view",
+                   "type": "function"
+               },
+               {
+                   "constant": false,
+                   "inputs": [
+                       {
+                           "name": "_to",
+                           "type": "address"
+                       },
+                       {
+                           "name": "_tokenId",
+                           "type": "uint256"
+                       }
+                   ],
+                   "name": "transfer",
+                   "outputs": [],
+                   "payable": false,
+                   "stateMutability": "nonpayable",
+                   "type": "function"
+               },
+               {
+                   "constant": true,
+                   "inputs": [],
+                   "name": "symbol_",
+                   "outputs": [
+                       {
+                           "name": "",
+                           "type": "string"
+                       }
+                   ],
+                   "payable": false,
+                   "stateMutability": "view",
+                   "type": "function"
+               },
+               {
+                   "constant": true,
+                   "inputs": [
+                       {
+                           "name": "_owner",
+                           "type": "address"
+                       }
+                   ],
+                   "name": "getticketByOwner",
+                   "outputs": [
+                       {
+                           "name": "",
+                           "type": "uint256[]"
+                       }
+                   ],
+                   "payable": false,
+                   "stateMutability": "view",
+                   "type": "function"
+               },
+               {
+                   "constant": false,
+                   "inputs": [
+                       {
+                           "name": "_tokenId",
+                           "type": "uint256"
+                       }
+                   ],
+                   "name": "returnTicket",
+                   "outputs": [],
+                   "payable": false,
+                   "stateMutability": "nonpayable",
+                   "type": "function"
+               },
+               {
+                   "constant": false,
+                   "inputs": [
+                       {
+                           "name": "_userid",
+                           "type": "uint32"
+                       },
+                       {
+                           "name": "_username",
+                           "type": "string"
+                       },
+                       {
+                           "name": "tokenId",
+                           "type": "uint256"
+                       }
+                   ],
+                   "name": "buyTicket",
+                   "outputs": [],
+                   "payable": true,
+                   "stateMutability": "payable",
+                   "type": "function"
+               },
+               {
+                   "constant": true,
+                   "inputs": [],
+                   "name": "name_",
+                   "outputs": [
+                       {
+                           "name": "",
+                           "type": "string"
+                       }
+                   ],
+                   "payable": false,
+                   "stateMutability": "view",
+                   "type": "function"
+               },
+               {
+                   "constant": true,
+                   "inputs": [],
+                   "name": "getAvailableTokens",
+                   "outputs": [
+                       {
+                           "name": "",
+                           "type": "uint256[]"
+                       }
+                   ],
+                   "payable": false,
+                   "stateMutability": "view",
+                   "type": "function"
+               },
+               {
+                   "constant": false,
+                   "inputs": [
+                       {
+                           "name": "newOwner",
+                           "type": "address"
+                       }
+                   ],
+                   "name": "transferOwnership",
+                   "outputs": [],
+                   "payable": false,
+                   "stateMutability": "nonpayable",
+                   "type": "function"
+               },
+               {
+                   "anonymous": false,
+                   "inputs": [
+                       {
+                           "indexed": true,
+                           "name": "_from",
+                           "type": "address"
+                       },
+                       {
+                           "indexed": true,
+                           "name": "_to",
+                           "type": "address"
+                       },
+                       {
+                           "indexed": true,
+                           "name": "_tokenId",
+                           "type": "uint256"
+                       }
+                   ],
+                   "name": "Transfer",
+                   "type": "event"
+               },
+               {
+                   "anonymous": false,
+                   "inputs": [
+                       {
+                           "indexed": true,
+                           "name": "_from",
+                           "type": "address"
+                       },
+                       {
+                           "indexed": true,
+                           "name": "_to",
+                           "type": "address"
+                       },
+                       {
+                           "indexed": true,
+                           "name": "_tokenId",
+                           "type": "uint256"
+                       }
+                   ],
+                   "name": "Approval",
+                   "type": "event"
+               },
+               {
+                   "anonymous": false,
+                   "inputs": [
+                       {
+                           "indexed": false,
+                           "name": "_to",
+                           "type": "address"
+                       },
+                       {
+                           "indexed": false,
+                           "name": "_from",
+                           "type": "address"
+                       },
+                       {
+                           "indexed": false,
+                           "name": "_tokenId",
+                           "type": "uint256"
+                       }
+                   ],
+                   "name": "Take",
+                   "type": "event"
+               },
+               {
+                   "anonymous": false,
+                   "inputs": [
+                       {
+                           "indexed": false,
+                           "name": "_tokenId",
+                           "type": "uint256"
+                       },
+                       {
+                           "indexed": false,
+                           "name": "userid",
+                           "type": "bytes32"
+                       },
+                       {
+                           "indexed": false,
+                           "name": "username",
+                           "type": "string"
+                       }
+                   ],
+                   "name": "Create",
+                   "type": "event"
+               },
+               {
+                   "anonymous": false,
+                   "inputs": [
+                       {
+                           "indexed": true,
+                           "name": "previousOwner",
+                           "type": "address"
+                       },
+                       {
+                           "indexed": true,
+                           "name": "newOwner",
+                           "type": "address"
+                       }
+                   ],
+                   "name": "OwnershipTransferred",
+                   "type": "event"
+               }
+           ];
+           myContract = new web3.eth.Contract(ticket_abi, ticket_address);
+              //取得合約餘額
+              var balance_contract = await web3.eth.getBalance(ticket_address);
+              $("#total_balance").text(web3.utils.fromWei(balance_contract, 'ether'));
+              // 调用 getAvailableTokens 函数
+              myContract.methods.getAvailableTokens().call()
+                .then(function(result) {
+                    console.log('可用的 Token ID 数组：', result);
+                    $("#availableTokens").text(result);
+                })
+                .catch(function(error) {
+                    console.error('调用 getAvailableTokens 函数时出错：', error);
+                });
+          };
+          printPostsToConsole();
+    </script>
+</body>
+</html>
