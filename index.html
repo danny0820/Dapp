@@ -1,0 +1,107 @@
+<html>
+<head>
+
+    <title> 演唱會購票系統</title>
+
+</head>
+<body>
+    <h1>演唱會購票系統</h1>
+	<p>我的地址：<span id="my_address"></span></p>
+	<p>我的餘額：<span id="my_balance"></span></p>
+	<hr/>
+	<p>賣門票</p>
+	<label for ="tic_price">門票價格: </label>
+	<input type="text" id="tic_price"><br>
+	<label for ="tic_number">門票總數: </label>
+	<input typr="text" id="tic_number"><br>
+	<button onclick="create_ticket">建立門票</button>
+    <hr/>
+	<p>買門票</p>
+	
+	
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.34/dist/web3.min.js"></script>
+    <script>
+		if (typeof web3 !== 'undefined') {
+		  web3 = new Web3(web3.currentProvider);
+		} else {
+		  // Set the provider you want from Web3.providers
+		  web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+		}
+
+		var myContract;
+		var coinbase;
+
+		async function printPostsToConsole() {
+
+			//取得帳號
+			coinbase = await web3.eth.getCoinbase();
+
+			//取得帳號餘額
+			var balance = await web3.eth.getBalance(coinbase);
+			 $("#my_address").text(coinbase);
+			 $("#my_balance").text(web3.utils.fromWei(balance));  //wei 轉換成 ether web3.utils.fromWei()
+			 
+			var contract_address = "";
+			var contract_abi = ;
+
+			myContract = new web3.eth.Contract(contract_abi, contract_address);
+
+			//取得合約餘額
+			
+			var ticket_number = await mycontract.methods.totalSupply.call();
+			
+			for(let i = 0;i<ticket_number;i++){
+
+				var tic = await mycontract.methods.ticket.call();
+				var tic_price = await myContract.methids.ticket.call();
+				var tic_bal = mycontract.methods.ticket_balance.call();
+				generateTicketSection(tic,tic_price,tic_bal);
+			}
+			
+		};
+		printPostsToConsole();
+		function generateTicketSection(ticket,tic_price,tic_bal) {
+			// 創建一個新的 div 元素
+			var newDiv = document.createElement("div");
+			newDiv.style.padding = "32px"; // 設置 padding
+
+			// 在 div 元素中添加內容
+			newDiv.innerHTML = `
+				<p>門票：<span class="ticket"></span></p>
+				<p>目前門票數量：<span class="total_balance"></span></p>
+				<p>門票價格：<span class="price"></span></p>
+				<button onclick="buy()">購買</button>
+				<button onclick="refund()">退票</button>
+			`;
+
+			// 將新的 div 元素添加到 body 中
+			document.body.appendChild(newDiv);
+
+			// 使用 jQuery 更新生成的部分的內容
+			$(newDiv).find(".ticket").text(ticket);
+			$(newDiv).find(".price").text(tic_price);
+			$(newDiv).find(".total_balance").text(tic_bal);
+			
+		}
+		function buy(){
+			myContract.methods.buy.send({from: coinbase,value:"1000000000000000"}).then(function(recepit){
+				location.reload();
+			});
+		}
+		function refund(){
+			myContract.methods.refund.send({from: coinbase}).then(function(recepit){
+				location.reload();
+			});
+		}
+		function create_ticket(){
+			var tic_price= document.getElementById("tic_price").value;
+			var tic_number= document.getElementById("tic_number").value;
+			myContract.methods.refund.send({from:tic_price,from :tic_number}).then(function(recepit){
+				location.reload();
+			});
+		}
+    </script>
+</body>
+
+</html>
