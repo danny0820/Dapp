@@ -166,7 +166,7 @@ contract Ticketsystem is  ERC721,Ownable {
     return result;
   }
   function transferFrom(address _from, address _to, uint256 _tokenId) public   {
-        // 确保调用者有权转移代币
+        // 確保調用者有權轉移代幣
         require(ticketToOwner[_tokenId] == _from);
         require(_to != address(0));
 
@@ -211,9 +211,9 @@ contract Ticketsystem is  ERC721,Ownable {
         ticketPrice = _ticketPrice *1 ether;
         maxTickets = _maxTickets;
         for (uint i = 0; i < _maxTickets; i++) {
-            // 这里创建每一张票，初始时都归合约拥有者所有
+            // 創建每一张票，初始時都歸合約擁有
             _mint(this, i);
-            tickets.push(ticket({userid: uint32(0), username: "shop"})); // 添加一个空的票务结构体
+            tickets.push(ticket({userid: uint32(0), username: "shop"})); //初始化票的結構
         }
     }
     function buyTicket(uint32 _userid, string _username, uint256 tokenId) public payable {
@@ -253,20 +253,20 @@ contract Ticketsystem is  ERC721,Ownable {
       }
 
    function returnTicket(uint256 _tokenId) public {
-        // 确保调用者是票的当前所有者
+        // 確保調用者是當前的擁有者
         require(ticketToOwner[_tokenId] == msg.sender, "Caller is not the ticket owner");
         ticketToOwner[_tokenId] = address(this);
         tickets[_tokenId].userid = uint32(0);
         tickets[_tokenId].username = "shop";
 
-        // 将票退回到合约地址
+        // 將票退還給合約
         ticketToOwner[_tokenId] = address(this);
 
-        // 更新拥有者的票务计数
+        // 更新擁有者的票數
         ownerticketCount[msg.sender] = ownerticketCount[msg.sender].sub(1);
         ownerticketCount[address(this)] = ownerticketCount[address(this)].add(1);
 
-        // 触发转移事件
+        // 轉移
         emit Transfer(msg.sender, address(this), _tokenId);
         msg.sender.transfer(ticketPrice-1 ether);
     }

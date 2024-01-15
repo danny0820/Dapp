@@ -25,8 +25,8 @@
     </div>
     <h2>剩餘票卷</h2>
     <ul id="availableTokens"></ul>
-    <button id="getMyTicketsButton">查詢我的票卷</button>
-    <ul id="myTicketList"></ul>
+    <!-- <button id="getMyTicketsButton">查詢我的票卷</button>
+    <ul id="myTicketList"></ul> -->
     <h2>查詢門票</h2>
     <div>
         <input type="number" id="tokenIdInput" placeholder="输入门票ID" />
@@ -55,7 +55,7 @@
               
                $("#my_address").text(coinbase);
                $("#my_balance").text(web3.utils.fromWei(balance, 'ether'));  
-               var ticket_address = "0x2f913e5c5788BeEe0B03bd8153f962b6D66E6530";
+               var ticket_address = "0x495258767936F308B59E615B24DF17E483Fd3541";
                var ticket_abi =[
                {
                    "constant": true,
@@ -573,7 +573,7 @@
                 });  
           };
                     // JavaScript 中的查询函数
-            document.getElementById("getMyTicketsButton").addEventListener("click", async function() { 
+           /* document.getElementById("getMyTicketsButton").addEventListener("click", async function() { 
                 try {
                     // 获取当前帐户地址
                     const coinbase = await web3.eth.getCoinbase();
@@ -598,7 +598,7 @@
                     listItem.textContent = "票卷 ID：" + ticketIds[i];
                     ticketList.appendChild(listItem);
                 }
-            }
+            }*/
             $("#returnTicketButton").click(async () => {
                 var tokenId = $("#tokenId").val();
     
