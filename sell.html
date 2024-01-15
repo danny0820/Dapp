@@ -17,7 +17,7 @@
         <p>售賣門票</p>
         <input type="number" id="ticket_price" placeholder="門票價格" />
         <input type="number" id="ticket_number" placeholder="門票數量" />
-        <button onclick="sellTicketButton()">確定</button>
+        <button id="createTicketButton">確定</button>
 
     </div>
     
@@ -41,7 +41,7 @@
               
                $("#my_address").text(coinbase);
                $("#my_balance").text(web3.utils.fromWei(balance, 'ether'));  
-               var ticket_address = "0xdE7aF4ed0BeEE7098D153dF42328D971A4e50848";
+               var ticket_address = "0x2f913e5c5788BeEe0B03bd8153f962b6D66E6530";
                var ticket_abi =[
                {
                    "constant": true,
@@ -522,19 +522,35 @@
            ];
             myContract = new web3.eth.Contract(ticket_abi, ticket_address);
               //取得合約餘額
+              $("#createTicketButton").click(async () => {
+                var ticketPrice = $("#ticket_price").val();
+                var maxTickets = $("#ticket_number").val();
+        
+                if (!ticketPrice || !maxTickets) {
+                    alert("请输入票价和最大票数");
+                    return;
+                }
+        
+                try {
+                    // 调用 createTicket 函数
+                    await myContract.methods.createTicket(ticketPrice, maxTickets).send({ from: coinbase });
+        
+                    // 更新合约的总余额和可用门票
+                    var balance_contract = await web3.eth.getBalance(ticket_address);
+                    var availableTokens = await myContract.methods.getAvailableTokens().call();
+        
+                    $("#total_balance").text(web3.utils.fromWei(balance_contract, 'ether'));
+                    console.log('可用的 Token ID 数组：', availableTokens);
+        
+                    alert("門票創建成功！");
+                } catch (error) {
+                    console.error('創建門票錯誤：', error);
+                }
+            });
            
           };
           printPostsToConsole();
-          function sellTicketButton(){
-            
-            var tic_price= parseInt(document.getElementById("ticket_price").value);
-			var tic_number= parseInt(document.getElementById("ticket_number").value);
-            console.log(tic_price,tic_number);
-            myContract.methods.createTicket(tic_price, tic_number).send({ from: coinbase, value: tic_price * tic_number }).then(function(recepit){
-				location.reload();
-			});
-
-          }
+    
     </script>
 </body>
 </html>
